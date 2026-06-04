@@ -162,6 +162,8 @@ export class GameManager {
       attack: false,
       jump: false,
       skill: false,
+      jumpLocked: false,
+      skillLocked: false,
     });
 
     this.createPlayerSprite(player, charConfig);
@@ -370,26 +372,54 @@ export class GameManager {
   private handleKeyDown(e: KeyboardEvent) {
     if (this.players.length >= 1) {
       const p1Keys = this.keyStates.get(1);
+      const p1 = this.players[0];
+      const p1Config = p1 ? this.characterConfigs[p1.characterId] : null;
       if (p1Keys) {
         if (e.key === 'a' || e.key === 'A') p1Keys.left = true;
         if (e.key === 'd' || e.key === 'D') p1Keys.right = true;
         if (e.key === 'w' || e.key === 'W') p1Keys.up = true;
         if (e.key === 's' || e.key === 'S') p1Keys.down = true;
         if (e.key === 'j' || e.key === 'J') p1Keys.attack = true;
-        if (e.key === 'k' || e.key === 'K') p1Keys.jump = true;
-        if (e.key === 'l' || e.key === 'L') p1Keys.skill = true;
+        if (e.key === 'k' || e.key === 'K') {
+          if (!p1Keys.jumpLocked && p1 && !p1.isJumping) {
+            p1Keys.jump = true;
+            p1Keys.jumpLocked = true;
+          }
+        }
+        if (e.key === 'l' || e.key === 'L') {
+          if (!p1Keys.skillLocked && p1 && p1Config) {
+            if (p1.skillCooldown <= 0 && p1.mp >= p1Config.skill.mpCost) {
+              p1Keys.skill = true;
+              p1Keys.skillLocked = true;
+            }
+          }
+        }
       }
     }
     if (this.players.length >= 2) {
       const p2Keys = this.keyStates.get(2);
+      const p2 = this.players[1];
+      const p2Config = p2 ? this.characterConfigs[p2.characterId] : null;
       if (p2Keys) {
         if (e.key === 'ArrowLeft') p2Keys.left = true;
         if (e.key === 'ArrowRight') p2Keys.right = true;
         if (e.key === 'ArrowUp') p2Keys.up = true;
         if (e.key === 'ArrowDown') p2Keys.down = true;
         if (e.key === '1') p2Keys.attack = true;
-        if (e.key === '2') p2Keys.jump = true;
-        if (e.key === '3') p2Keys.skill = true;
+        if (e.key === '2') {
+          if (!p2Keys.jumpLocked && p2 && !p2.isJumping) {
+            p2Keys.jump = true;
+            p2Keys.jumpLocked = true;
+          }
+        }
+        if (e.key === '3') {
+          if (!p2Keys.skillLocked && p2 && p2Config) {
+            if (p2.skillCooldown <= 0 && p2.mp >= p2Config.skill.mpCost) {
+              p2Keys.skill = true;
+              p2Keys.skillLocked = true;
+            }
+          }
+        }
       }
     }
   }
@@ -403,8 +433,14 @@ export class GameManager {
         if (e.key === 'w' || e.key === 'W') p1Keys.up = false;
         if (e.key === 's' || e.key === 'S') p1Keys.down = false;
         if (e.key === 'j' || e.key === 'J') p1Keys.attack = false;
-        if (e.key === 'k' || e.key === 'K') p1Keys.jump = false;
-        if (e.key === 'l' || e.key === 'L') p1Keys.skill = false;
+        if (e.key === 'k' || e.key === 'K') {
+          p1Keys.jump = false;
+          p1Keys.jumpLocked = false;
+        }
+        if (e.key === 'l' || e.key === 'L') {
+          p1Keys.skill = false;
+          p1Keys.skillLocked = false;
+        }
       }
     }
     if (this.players.length >= 2) {
@@ -415,8 +451,14 @@ export class GameManager {
         if (e.key === 'ArrowUp') p2Keys.up = false;
         if (e.key === 'ArrowDown') p2Keys.down = false;
         if (e.key === '1') p2Keys.attack = false;
-        if (e.key === '2') p2Keys.jump = false;
-        if (e.key === '3') p2Keys.skill = false;
+        if (e.key === '2') {
+          p2Keys.jump = false;
+          p2Keys.jumpLocked = false;
+        }
+        if (e.key === '3') {
+          p2Keys.skill = false;
+          p2Keys.skillLocked = false;
+        }
       }
     }
   }
@@ -507,6 +549,7 @@ export class GameManager {
     if (keys.jump && !player.isJumping) {
       player.velocityY = -charConfig.stats.jumpForce;
       player.isJumping = true;
+      keys.jump = false;
     }
 
     player.velocityY += GRAVITY;
@@ -551,6 +594,7 @@ export class GameManager {
     if (keys.skill && player.skillCooldown <= 0 && player.mp >= charConfig.skill.mpCost) {
       player.skillCooldown = charConfig.skill.cooldown;
       player.mp -= charConfig.skill.mpCost;
+      keys.skill = false;
       this.spawnSkillEffect(player, charConfig);
       this.playerUseSkill(player, charConfig);
     }

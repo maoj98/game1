@@ -163,6 +163,8 @@ export interface KeyState {
   attack: boolean;
   jump: boolean;
   skill: boolean;
+  jumpLocked: boolean;
+  skillLocked: boolean;
 }
 
 export interface GameConfig {
