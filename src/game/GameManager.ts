@@ -454,7 +454,7 @@ export class GameManager {
     this.checkGameEnd();
     this.updateCamera();
     if (this.onPlayerUpdate) {
-      this.onPlayerUpdate(this.players);
+      this.onPlayerUpdate([...this.players]);
     }
   }
 
