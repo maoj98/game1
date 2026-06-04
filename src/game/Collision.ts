@@ -54,6 +54,21 @@ export class CollisionSystem {
     return this.checkAABB(projectileBox, target);
   }
 
+  static checkSkillRangeHit(
+    player: PlayerState,
+    monster: MonsterState,
+    range: number
+  ): boolean {
+    const playerCX = player.x + player.width / 2;
+    const playerCY = player.y + player.height / 2;
+    const monsterCX = monster.x + monster.width / 2;
+    const monsterCY = monster.y + monster.height / 2;
+    const dx = playerCX - monsterCX;
+    const dy = playerCY - monsterCY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return dist <= range;
+  }
+
   static checkPlatformCollision(
     entity: { x: number; y: number; width: number; height: number; velocityY: number },
     platform: { x: number; y: number; width: number; height: number },

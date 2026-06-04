@@ -75,7 +75,11 @@ export class GameManager {
 
   private keyStates: Map<number, KeyState> = new Map();
   private lastUpdateTime = 0;
+  private lastMonsterUpdateTime = 0;
   private running = false;
+  private monsterAiRafId: number | null = null;
+  private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  private boundKeyUp: ((e: KeyboardEvent) => void) | null = null;
 
   private onScoreUpdate: ((score: number) => void) | null = null;
   private onPlayerUpdate: ((players: PlayerState[]) => void) | null = null;
@@ -357,8 +361,10 @@ export class GameManager {
   }
 
   private setupKeyboardInput() {
-    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+    this.boundKeyDown = this.handleKeyDown.bind(this);
+    this.boundKeyUp = this.handleKeyUp.bind(this);
+    window.addEventListener('keydown', this.boundKeyDown);
+    window.addEventListener('keyup', this.boundKeyUp);
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -418,13 +424,16 @@ export class GameManager {
   start() {
     this.running = true;
     this.lastUpdateTime = performance.now();
+    this.lastMonsterUpdateTime = performance.now();
     this.render();
     this.app.ticker.add(this.gameLoop);
+    this.startMonsterAiLoop();
   }
 
   stop() {
     this.running = false;
     this.app.ticker.remove(this.gameLoop);
+    this.stopMonsterAiLoop();
   }
 
   private gameLoop = () => {
@@ -438,7 +447,6 @@ export class GameManager {
 
   private update(deltaTime: number) {
     this.updatePlayers(deltaTime);
-    this.updateMonsters(deltaTime);
     this.updateProjectiles(deltaTime);
     this.updateItems(deltaTime);
     this.updateEffects(deltaTime);
@@ -447,6 +455,25 @@ export class GameManager {
     this.updateCamera();
     if (this.onPlayerUpdate) {
       this.onPlayerUpdate(this.players);
+    }
+  }
+
+  private startMonsterAiLoop() {
+    const loop = () => {
+      if (!this.running) return;
+      const now = performance.now();
+      const dt = now - this.lastMonsterUpdateTime;
+      this.lastMonsterUpdateTime = now;
+      this.updateMonsters(dt);
+      this.monsterAiRafId = requestAnimationFrame(loop);
+    };
+    this.monsterAiRafId = requestAnimationFrame(loop);
+  }
+
+  private stopMonsterAiLoop() {
+    if (this.monsterAiRafId !== null) {
+      cancelAnimationFrame(this.monsterAiRafId);
+      this.monsterAiRafId = null;
     }
   }
 
@@ -654,7 +681,7 @@ export class GameManager {
 
     const effect: SkillEffect = {
       id: `skill_${Date.now()}_${Math.random()}`,
-      x: player.x + player.width / 2 + (player.facing === 'right' ? 40 : -40),
+      x: player.x + player.width / 2,
       y: player.y + player.height / 2,
       type,
       age: 0,
@@ -709,11 +736,11 @@ export class GameManager {
       };
       this.projectiles.push(projectile);
       this.createProjectileSprite(projectile, charConfig.color);
-    } else {
-      for (const monster of this.monsters) {
-        if (CollisionSystem.checkPlayerAttackHit(player, monster, charConfig.skill.range)) {
-          this.damageMonster(monster, damage);
-        }
+    }
+
+    for (const monster of this.monsters) {
+      if (CollisionSystem.checkSkillRangeHit(player, monster, charConfig.skill.range)) {
+        this.damageMonster(monster, damage);
       }
     }
   }
@@ -1133,8 +1160,8 @@ export class GameManager {
 
   destroy() {
     this.stop();
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
+    if (this.boundKeyDown) window.removeEventListener('keydown', this.boundKeyDown);
+    if (this.boundKeyUp) window.removeEventListener('keyup', this.boundKeyUp);
     this.app.destroy(true);
   }
 
