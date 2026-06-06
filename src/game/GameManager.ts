@@ -9,6 +9,7 @@ const PLAYER_HEIGHT = 56;
 const ATTACK_COOLDOWN = 400;
 const ATTACK_RANGE = 60;
 const BASE_MOVE_SPEED = 5;
+const CAMERA_SAFE_MARGIN = 150;
 
 interface SlashEffect {
   id: string;
@@ -957,42 +958,43 @@ export class GameManager {
     const alivePlayers = this.players.filter((p) => p.hp > 0);
     if (alivePlayers.length === 0) return;
 
-    let targetX: number;
-    let minCameraX: number;
-    let maxCameraX: number;
-
     if (alivePlayers.length >= 2) {
-      const player1X = alivePlayers[0].x + alivePlayers[0].width / 2;
-      const player2X = alivePlayers[1].x + alivePlayers[1].width / 2;
+      const p1CenterX = alivePlayers[0].x + alivePlayers[0].width / 2;
+      const p2CenterX = alivePlayers[1].x + alivePlayers[1].width / 2;
       
-      const midPoint = (player1X + player2X) / 2;
-      targetX = midPoint - this.gameWidth / 2;
+      const leftPlayerX = Math.min(p1CenterX, p2CenterX);
+      const rightPlayerX = Math.max(p1CenterX, p2CenterX);
+      const midPoint = (leftPlayerX + rightPlayerX) / 2;
+      const targetX = midPoint - this.gameWidth / 2;
       
-      const leftMost = Math.min(player1X, player2X);
-      const rightMost = Math.max(player1X, player2X);
-      const distance = rightMost - leftMost;
-      const margin = 100;
+      const maxAllowedDistance = this.gameWidth - CAMERA_SAFE_MARGIN * 2;
+      const actualDistance = rightPlayerX - leftPlayerX;
       
-      minCameraX = rightMost - this.gameWidth + margin;
-      maxCameraX = leftMost - margin;
+      let clampedTargetX = targetX;
       
-      if (minCameraX > maxCameraX) {
-        const center = (minCameraX + maxCameraX) / 2;
-        minCameraX = center;
-        maxCameraX = center;
+      if (actualDistance <= maxAllowedDistance) {
+        const minCameraX = rightPlayerX + CAMERA_SAFE_MARGIN - this.gameWidth;
+        const maxCameraX = leftPlayerX - CAMERA_SAFE_MARGIN;
+        clampedTargetX = Math.max(minCameraX, Math.min(maxCameraX, targetX));
+      } else {
+        const minCameraX = rightPlayerX - this.gameWidth + PLAYER_WIDTH / 2;
+        const maxCameraX = leftPlayerX - PLAYER_WIDTH / 2;
+        clampedTargetX = Math.max(minCameraX, Math.min(maxCameraX, targetX));
       }
+      
+      const mapMinX = 0;
+      const mapMaxX = this.mapConfig.width - this.gameWidth;
+      clampedTargetX = Math.max(mapMinX, Math.min(mapMaxX, clampedTargetX));
+      
+      this.cameraX += (clampedTargetX - this.cameraX) * 0.12;
     } else {
       const playerX = alivePlayers[0].x + alivePlayers[0].width / 2;
-      targetX = playerX - this.gameWidth / 2;
-      minCameraX = 0;
-      maxCameraX = this.mapConfig.width - this.gameWidth;
-    }
-
-    this.cameraX += (targetX - this.cameraX) * 0.1;
-    this.cameraX = Math.max(0, Math.min(this.mapConfig.width - this.gameWidth, this.cameraX));
-    
-    if (alivePlayers.length >= 2) {
-      this.cameraX = Math.max(minCameraX, Math.min(maxCameraX, this.cameraX));
+      const targetX = playerX - this.gameWidth / 2;
+      const mapMinX = 0;
+      const mapMaxX = this.mapConfig.width - this.gameWidth;
+      const clampedTargetX = Math.max(mapMinX, Math.min(mapMaxX, targetX));
+      
+      this.cameraX += (clampedTargetX - this.cameraX) * 0.1;
     }
   }
 
