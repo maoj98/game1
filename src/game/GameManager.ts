@@ -8,6 +8,7 @@ const PLAYER_WIDTH = 40;
 const PLAYER_HEIGHT = 56;
 const ATTACK_COOLDOWN = 400;
 const ATTACK_RANGE = 60;
+const BASE_MOVE_SPEED = 5;
 
 interface SlashEffect {
   id: string;
@@ -534,7 +535,7 @@ export class GameManager {
     const charConfig = this.characterConfigs[player.characterId];
     if (!charConfig) return;
 
-    const speed = charConfig.stats.speed * (deltaTime / 16.67);
+    const speed = BASE_MOVE_SPEED * (deltaTime / 16.67);
 
     if (keys.left) {
       player.velocityX = -speed;
@@ -955,10 +956,44 @@ export class GameManager {
     if (this.players.length === 0) return;
     const alivePlayers = this.players.filter((p) => p.hp > 0);
     if (alivePlayers.length === 0) return;
-    const avgX = alivePlayers.reduce((sum, p) => sum + p.x + p.width / 2, 0) / alivePlayers.length;
-    const targetX = avgX - this.gameWidth / 2;
+
+    let targetX: number;
+    let minCameraX: number;
+    let maxCameraX: number;
+
+    if (alivePlayers.length >= 2) {
+      const player1X = alivePlayers[0].x + alivePlayers[0].width / 2;
+      const player2X = alivePlayers[1].x + alivePlayers[1].width / 2;
+      
+      const midPoint = (player1X + player2X) / 2;
+      targetX = midPoint - this.gameWidth / 2;
+      
+      const leftMost = Math.min(player1X, player2X);
+      const rightMost = Math.max(player1X, player2X);
+      const distance = rightMost - leftMost;
+      const margin = 100;
+      
+      minCameraX = rightMost - this.gameWidth + margin;
+      maxCameraX = leftMost - margin;
+      
+      if (minCameraX > maxCameraX) {
+        const center = (minCameraX + maxCameraX) / 2;
+        minCameraX = center;
+        maxCameraX = center;
+      }
+    } else {
+      const playerX = alivePlayers[0].x + alivePlayers[0].width / 2;
+      targetX = playerX - this.gameWidth / 2;
+      minCameraX = 0;
+      maxCameraX = this.mapConfig.width - this.gameWidth;
+    }
+
     this.cameraX += (targetX - this.cameraX) * 0.1;
     this.cameraX = Math.max(0, Math.min(this.mapConfig.width - this.gameWidth, this.cameraX));
+    
+    if (alivePlayers.length >= 2) {
+      this.cameraX = Math.max(minCameraX, Math.min(maxCameraX, this.cameraX));
+    }
   }
 
   private render() {
