@@ -47,9 +47,13 @@ function togglePlayerCount() {
 
 function startGame() {
   gameStore.setDifficulty(selectedDifficulty.value);
-  gameStore.setSelectedCharacters(
-    unlockedCharacters.value.slice(0, playerCount.value).map(c => c.id)
+  
+  const availableChars = unlockedCharacters.value;
+  const selectedCharIds = Array.from({ length: playerCount.value }, (_, i) => 
+    availableChars[i % availableChars.length].id
   );
+  
+  gameStore.setSelectedCharacters(selectedCharIds);
   emit('startGame', selectedLevel.value);
 }
 
