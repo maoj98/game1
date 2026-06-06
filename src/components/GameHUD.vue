@@ -92,11 +92,51 @@ const hasCritBuff = (player: PlayerState) => {
       </div>
     </div>
 
-    <div class="controls-display">
-      <div class="control-group">
-        <span class="control-key">J</span><span class="control-desc">攻击</span>
-        <span class="control-key">K</span><span class="control-desc">跳跃</span>
-        <span class="control-key">L</span><span class="control-desc">技能</span>
+    <div class="controls-panel">
+      <div class="control-box p1-controls">
+        <div class="control-box-header">
+          <span class="player-tag p1">P1</span>
+          <span class="control-title">操作说明</span>
+        </div>
+        <div class="control-row">
+          <span class="control-keys">W A S D</span>
+          <span class="control-desc">移动</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">J</span>
+          <span class="control-desc">攻击</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">K</span>
+          <span class="control-desc">跳跃</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">L</span>
+          <span class="control-desc">技能</span>
+        </div>
+      </div>
+      
+      <div class="control-box p2-controls">
+        <div class="control-box-header">
+          <span class="player-tag p2">P2</span>
+          <span class="control-title">操作说明</span>
+        </div>
+        <div class="control-row">
+          <span class="control-keys">↑ ← ↓ →</span>
+          <span class="control-desc">移动</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">1</span>
+          <span class="control-desc">攻击</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">2</span>
+          <span class="control-desc">跳跃</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">3</span>
+          <span class="control-desc">技能</span>
+        </div>
       </div>
     </div>
   </div>
@@ -301,21 +341,73 @@ const hasCritBuff = (player: PlayerState) => {
   transition: width 0.1s;
 }
 
-.controls-display {
+.controls-panel {
   position: absolute;
-  bottom: 15px;
+  top: 80px;
   right: 15px;
-  background: rgba(26, 26, 46, 0.8);
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   pointer-events: none;
 }
 
-.control-group {
+.control-box {
+  background: rgba(26, 26, 46, 0.9);
+  border: 2px solid #444;
+  border-radius: 6px;
+  padding: 12px;
+  min-width: 160px;
+}
+
+.control-box.p1-controls {
+  border-color: #00d9ff;
+}
+
+.control-box.p2-controls {
+  border-color: #ff6b6b;
+}
+
+.control-box-header {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.player-tag {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.player-tag.p1 {
+  background: #00d9ff;
+  color: #1a1a2e;
+}
+
+.player-tag.p2 {
+  background: #ff6b6b;
+  color: #1a1a2e;
+}
+
+.control-title {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
 }
 
 .control-key {
@@ -329,9 +421,20 @@ const hasCritBuff = (player: PlayerState) => {
   text-align: center;
 }
 
-.control-desc {
-  color: #888;
+.control-keys {
+  background: #444;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 3px;
   font-size: 11px;
-  margin-right: 10px;
+  font-weight: bold;
+  min-width: 70px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.control-desc {
+  color: #aaa;
+  font-size: 11px;
 }
 </style>
